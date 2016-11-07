@@ -6,13 +6,13 @@ CFLAGS = -O3 -Wall -g -std=c11
 # OBJS = rgb_image.o parse.o detect.o shrink.o face.o
 # HEADERS = parse.h rgb_image.h shrink.h face.h
 
-all: calculation
+all: main
 
 detect: $(OBJS)
-	$(CC) $(CFLAGS) -o calculation $(OBJS)
+	$(CC) $(CFLAGS) -o main $(OBJS)
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -I -o $@ $<
 
 clean:
-	rm -rf *.o calculation
+	rm -rf *.o main *.dSYM
