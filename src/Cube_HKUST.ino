@@ -18,7 +18,9 @@ void setup()
 
 void loop()
 {
-
+	double motor_speed = 0; // in radian.s^-1
+	maxon.enable();
+	maxon.setMotor((int)motor_speed);
 }
 /*
 int main(int argc, char const *argv[]) {
