@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constant.h"
-#include <Maxon.h>
+#include <maxon.h>
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
