@@ -22,12 +22,3 @@ void loop()
 	maxon.enable();
 	maxon.setMotor((int)motor_speed);
 }
-/*
-int main(int argc, char const *argv[]) {
-
-	double ang_vel_w_jump_sqrt = 0;
-
-	ang_vel_w_jump_sqrt = ang_vel_w_jump();
-
-	return 0;
-}*/

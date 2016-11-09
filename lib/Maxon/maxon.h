@@ -1,6 +1,7 @@
 /*
-This is an Arduino driver for the maxon motors 1-Q-EC Amplifier DEC Module 24/2.
-Author: Brian Eccles
+This will be an Arduino driver for the maxon motors 1-Q-EC Amplifier DEC Module 50/5.
+Modified: Beck Pang, Nov. 8th, 2016
+Credit to: Brian Eccles
 */
 
 #ifndef MAXON_H
