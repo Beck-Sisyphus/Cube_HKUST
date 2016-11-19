@@ -73,8 +73,8 @@ void setup()
 	dmpReady_1 = test_dmp_connection(mpu1, packetSize_1);
 	dmpReady_2 = test_dmp_connection(mpu2, packetSize_2);
 
-	attachInterrupt(0, dmpDataReady_1, RISING);
-	attachInterrupt(1, dmpDataReady_2, RISING);
+	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN0), dmpDataReady_1, RISING);
+	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN1), dmpDataReady_2, RISING);
 
 	// TODO: Calibrate both MPU-6050
 	setMPUofffset(mpu1, 220, 76, -85, 1788); // XGyro, YGyro, ZGyro, ZAccel
@@ -97,8 +97,8 @@ void setup()
 void loop()
 {
 	// wait for MPU interrupt or extra packet(s) available
-	while (!mpuInterrupt_1 && fifoCount_1 < packetSize_1 \
-			&& !mpuInterrupt_2 && fifoCount_2 < packetSize_2) {
+	while ((!mpuInterrupt_1 && fifoCount_1 < packetSize_1) \
+			|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
 		// Set up Maxon motor
 		// double motor_speed = 0; // in radian.s^-1
 		// maxon.enable();
@@ -110,15 +110,13 @@ void loop()
 		// reset interrupt flag and get INT_STATUS byte
 		mpuInterrupt_1 = false;
 
-		process_mpu_data(mpu1, packetSize_1, fifoCount_1);
+		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1);
 	}
-	else if (dmpReady_2) {
+ 
+	if (dmpReady_2) {
 
 		mpuInterrupt_2 = false;
 
-		process_mpu_data(mpu2, packetSize_2, fifoCount_2);
-	}
-	else {
-		Serial.println("MPU failed");
+		process_mpu_data(mpu2, packetSize_2, fifoCount_2, 2);
 	}
 }

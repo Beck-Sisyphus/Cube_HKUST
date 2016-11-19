@@ -71,7 +71,7 @@ bool test_dmp_connection(MPU6050 mpu, uint16_t &packetSize) {
 	return dmpReady;
 }
 
-void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount) {
+void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, int number) {
 	uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
 	uint8_t fifoBuffer[64]; // FIFO storage buffer
 
@@ -92,7 +92,8 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount) {
 	if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
 		// reset so we can continue cleanly
 		mpu.resetFIFO();
-		Serial.println("FIFO overflow!");
+		Serial.print("FIFO overflow! mpu");
+    Serial.println(number);
 
 	// otherwise, check for DMP data ready interrupt (this should happen frequently)
 	} else if (mpuIntStatus & 0x02) {
@@ -136,6 +137,7 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount) {
 			mpu.dmpGetQuaternion(&q, fifoBuffer);
 			mpu.dmpGetGravity(&gravity, &q);
 			mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+      Serial.print(number);
 			Serial.print("ypr\t");
 			Serial.print(ypr[0] * 180/M_PI);
 			Serial.print("\t");
