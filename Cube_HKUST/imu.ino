@@ -21,7 +21,7 @@
 // not compensated for orientation, so +X is always +X according to the
 // sensor, just without the effects of gravity. If you want acceleration
 // compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
+// #define OUTPUT_READABLE_REALACCEL
 
 // uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
 // components with gravity removed and adjusted for the world frame of
@@ -196,9 +196,12 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 	}
 }
 
-void setMPUofffset(MPU6050 mpu, int XGyro,int YGyro,int ZGyro,int ZAccel) {
-	mpu.setXGyroOffset(XGyro);
-	mpu.setYGyroOffset(YGyro);
-	mpu.setZGyroOffset(ZGyro);
-	mpu.setZAccelOffset(ZAccel);
+// Combined function to tune a MPU 6050
+void setMPUofffset(MPU6050 mpu,int acelX,int acelY,int acelZ,int gyroX,int gyroY,int gyroZ) {
+	mpu.setXAccelOffset(acelX);
+	mpu.setYAccelOffset(acelY);
+	mpu.setZAccelOffset(acelZ);
+	mpu.setXGyroOffset(gyroX);
+	mpu.setYGyroOffset(gyroY);
+	mpu.setZGyroOffset(gyroZ);
 }

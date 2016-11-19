@@ -76,9 +76,9 @@ void setup()
 	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN0), dmpDataReady_1, RISING);
 	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN1), dmpDataReady_2, RISING);
 
-	// TODO: Calibrate both MPU-6050
-	setMPUofffset(mpu1, 220, 76, -85, 1788); // XGyro, YGyro, ZGyro, ZAccel
-	setMPUofffset(mpu2, 220, 76, -85, 1788); // XGyro, YGyro, ZGyro, ZAccel
+	// Calibrate both MPU-6050 in acelX acelY acelZ gyroX gyroY gyroZ
+	setMPUofffset(mpu1, 1027, 875, 1489, 1166, 43, 55);
+	setMPUofffset(mpu2, -2651, -243, 1408, 101, -7, 13);
 
 
 	// Initialize the Nidec motor
@@ -112,7 +112,7 @@ void loop()
 
 		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1);
 	}
- 
+
 	if (dmpReady_2) {
 
 		mpuInterrupt_2 = false;
