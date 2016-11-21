@@ -17,7 +17,7 @@ void nidec_motor_init() {
 // Set the motor speed from -255 to 255 with continous connection
 // 0 stops, 255 as the fastest, -255 the slowliest
 // TODO: Change to rad.s^-1 after feedback
-void nidec_speed_set(int speed) {
+void nidec_speed(int speed) {
 	if (speed > 0 ) {
 		digitalWrite(STOP_PIN, HIGH);
 		digitalWrite(DIREC_PIN, HIGH);

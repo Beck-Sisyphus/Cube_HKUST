@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constant.h"
+#include <Wire.h>
+// #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 #include "MPU6050_6Axis_MotionApps20.h"
 // #include <maxon.h>
 
@@ -10,9 +12,9 @@
 // Maxon maxon;
 
 // Nidec Motor, running in 12V, PWM controlled, with stop and direction control
-#define STOP_PIN 7 // Yellow wire, 3rd
-#define DIREC_PIN 8 // Green wire, 5th
+#define STOP_PIN 8 // Yellow wire, 3rd
 #define NIDEC_PWM_PIN 9 // White wire, 4th
+#define DIREC_PIN 10 // Green wire, 5th
 
 // LED for debugging
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
@@ -35,6 +37,8 @@ MPU6050 mpu2(0x69);
 	uint16_t packetSize_2;    // expected DMP packet size (default is 42 bytes)
 	uint16_t fifoCount_2;     // count of all bytes currently in FIFO
 
+float body_angle,  body_angle_dot,  body_angle_dot_dot;
+float wheel_angle, wheel_angle_dot, wheel_angle_dot_dot;
 
 // Interrupt Detection Routine
 volatile bool mpuInterrupt_1 = false;     // indicates whether MPU interrupt pin has gone high
@@ -103,6 +107,16 @@ void loop()
 		// double motor_speed = 0; // in radian.s^-1
 		// maxon.enable();
 		// maxon.setMotor((int)motor_speed);
+
+		// Set Nidec motor speed
+		nidec_speed(20);
+
+		// Get the calculated angle and angle dot dot
+		tilt_estimation(mpu1, mpu2, &body_angle, &body_angle_dot_dot);
+    Serial.print("measured body angle: ");
+    Serial.println(body_angle);
+    Serial.print("body angular acceleration: ");
+    Serial.println(body_angle_dot_dot);
 	}
 
 	// if programming failed, don't try to do anything
