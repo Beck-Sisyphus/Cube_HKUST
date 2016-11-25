@@ -24,7 +24,7 @@
 // not compensated for orientation, so +X is always +X according to the
 // sensor, just without the effects of gravity. If you want acceleration
 // compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-// #define OUTPUT_READABLE_REALACCEL
+#define OUTPUT_READABLE_REALACCEL
 
 // uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
 // components with gravity removed and adjusted for the world frame of
@@ -74,13 +74,12 @@ bool test_dmp_connection(MPU6050 mpu, uint16_t &packetSize) {
 	return dmpReady;
 }
 
-void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, int number) {
+void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, int number, VectorInt16 *aa) {
 	uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
 	uint8_t fifoBuffer[64]; // FIFO storage buffer
 
 	// orientation/motion vars
 	Quaternion q;           // [w, x, y, z]         quaternion container
-	VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 	VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
 	VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 	VectorFloat gravity;    // [x, y, z]            gravity vector
@@ -152,10 +151,11 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 		#ifdef OUTPUT_READABLE_REALACCEL
 			// display real acceleration, adjusted to remove gravity
 			mpu.dmpGetQuaternion(&q, fifoBuffer);
-			mpu.dmpGetAccel(&aa, fifoBuffer);
+			mpu.dmpGetAccel(aa, fifoBuffer);
 			mpu.dmpGetGravity(&gravity, &q);
-			mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+			mpu.dmpGetLinearAccel(&aaReal, aa, &gravity);
 			Serial.print("areal\t");
+      Serial.print(number);
 			Serial.print(aaReal.x);
 			Serial.print("\t");
 			Serial.print(aaReal.y);

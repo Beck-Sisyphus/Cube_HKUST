@@ -37,6 +37,9 @@ MPU6050 mpu2(0x69);
 	uint16_t packetSize_2;    // expected DMP packet size (default is 42 bytes)
 	uint16_t fifoCount_2;     // count of all bytes currently in FIFO
 
+	VectorInt16 aa1;         // [x, y, z]            accel sensor measurements
+	VectorInt16 aa2;         // [x, y, z]            accel sensor measurements
+
 float body_angle,  body_angle_dot,  body_angle_dot_dot;
 float wheel_angle, wheel_angle_dot, wheel_angle_dot_dot;
 
@@ -81,8 +84,8 @@ void setup()
 	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN1), dmpDataReady_2, RISING);
 
 	// Calibrate both MPU-6050 in acelX acelY acelZ gyroX gyroY gyroZ
-	setMPUofffset(mpu1, 1027, 875, 1489, 1166, 43, 55);
-	setMPUofffset(mpu2, -2651, -243, 1408, 101, -7, 13);
+	setMPUofffset(mpu1, -2712,	-279,	1384,	103,	-6,	37); //
+	setMPUofffset(mpu2, 1131,	878,	1465,	1126,	47,	78);//
 
 
 	// Initialize the Nidec motor
@@ -110,13 +113,6 @@ void loop()
 
 		// Set Nidec motor speed
 		nidec_speed(20);
-
-		// Get the calculated angle and angle dot dot
-		tilt_estimation(mpu1, mpu2, &body_angle, &body_angle_dot_dot);
-    Serial.print("measured body angle: ");
-    Serial.println(body_angle);
-    Serial.print("body angular acceleration: ");
-    Serial.println(body_angle_dot_dot);
 	}
 
 	// if programming failed, don't try to do anything
@@ -124,13 +120,19 @@ void loop()
 		// reset interrupt flag and get INT_STATUS byte
 		mpuInterrupt_1 = false;
 
-		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1);
+		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1, &aa1);
 	}
 
 	if (dmpReady_2) {
 
 		mpuInterrupt_2 = false;
 
-		process_mpu_data(mpu2, packetSize_2, fifoCount_2, 2);
+		process_mpu_data(mpu2, packetSize_2, fifoCount_2, 2, &aa2);
 	}
+    // Get the calculated angle and angle dot dot
+    tilt_estimation(&aa1, &aa2, &body_angle, &body_angle_dot_dot);
+      Serial.print("measured body angle: ");
+      Serial.println(body_angle);
+      Serial.print("body angular acceleration: ");
+      Serial.println(body_angle_dot_dot);
 }
