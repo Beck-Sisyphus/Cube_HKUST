@@ -86,9 +86,9 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 	float euler[3];         // [psi, theta, phi]    Euler angle container
 	float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
-	mpuIntStatus = mpu1.getIntStatus();
+	mpuIntStatus = mpu.getIntStatus();
 	// get current FIFO count
-	fifoCount = mpu1.getFIFOCount();
+	fifoCount = mpu.getFIFOCount();
 
 	// check for overflow (this should never happen unless our code is too inefficient)
 	if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
