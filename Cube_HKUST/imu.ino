@@ -74,7 +74,7 @@ bool test_dmp_connection(MPU6050 mpu, uint16_t &packetSize) {
 	return dmpReady;
 }
 
-void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, int number, VectorInt16 *aa) {
+void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, int number, VectorInt16 *aa, int32_t *gyro) {
 	uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
 	uint8_t fifoBuffer[64]; // FIFO storage buffer
 
@@ -109,59 +109,10 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 		// (this lets us immediately read more without waiting for an interrupt)
 		fifoCount -= packetSize;
 
-		#ifdef OUTPUT_READABLE_QUATERNION
-			// display quaternion values in easy matrix form: w x y z
-			mpu.dmpGetQuaternion(&q, fifoBuffer);
-			Serial.print("quat\t");
-			Serial.print(q.w);
-			Serial.print("\t");
-			Serial.print(q.x);
-			Serial.print("\t");
-			Serial.print(q.y);
-			Serial.print("\t");
-			Serial.println(q.z);
-		#endif
+		// TODO: compare the result from DMP to two IMU readings
+		mpu.dmpGetGyro(gyro, fifoBuffer);
 
-		#ifdef OUTPUT_READABLE_EULER
-			// display Euler angles in degrees
-			mpu.dmpGetQuaternion(&q, fifoBuffer);
-			mpu.dmpGetEuler(euler, &q);
-			Serial.print("euler\t");
-			Serial.print(euler[0] * 180/M_PI);
-			Serial.print("\t");
-			Serial.print(euler[1] * 180/M_PI);
-			Serial.print("\t");
-			Serial.println(euler[2] * 180/M_PI);
-		#endif
-
-		#ifdef OUTPUT_READABLE_YAWPITCHROLL
-			// display Euler angles in degrees
-			mpu.dmpGetQuaternion(&q, fifoBuffer);
-			mpu.dmpGetGravity(&gravity, &q);
-			mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-      Serial.print(number);
-			Serial.print("ypr\t");
-			Serial.print(ypr[0] * 180/M_PI);
-			Serial.print("\t");
-			Serial.print(ypr[1] * 180/M_PI);
-			Serial.print("\t");
-			Serial.println(ypr[2] * 180/M_PI);
-		#endif
-
-		#ifdef OUTPUT_READABLE_REALACCEL
-			// display real acceleration, adjusted to remove gravity
-			mpu.dmpGetQuaternion(&q, fifoBuffer);
-			mpu.dmpGetAccel(aa, fifoBuffer);
-			mpu.dmpGetGravity(&gravity, &q);
-			mpu.dmpGetLinearAccel(&aaReal, aa, &gravity);
-			Serial.print("areal\t");
-      Serial.print(number);
-			Serial.print(aaReal.x);
-			Serial.print("\t");
-			Serial.print(aaReal.y);
-			Serial.print("\t");
-			Serial.println(aaReal.z);
-		#endif
+		mpu.dmpGetAccel(aa, fifoBuffer);
 
 		#ifdef OUTPUT_READABLE_WORLDACCEL
 			// display initial world-frame acceleration, adjusted to remove gravity
@@ -193,9 +144,6 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 			teapotPacket[11]++; // packetCount, loops at 0xFF on purpose
 		#endif
 
-		// blink LED to indicate activity
-		blinkState = !blinkState;
-		digitalWrite(LED_PIN, blinkState);
 	}
 }
 

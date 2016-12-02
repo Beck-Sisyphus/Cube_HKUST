@@ -39,6 +39,8 @@ MPU6050 mpu2(0x69);
 
 	VectorInt16 aa1;         // [x, y, z]            accel sensor measurements
 	VectorInt16 aa2;         // [x, y, z]            accel sensor measurements
+	int32_t gyro1[3];
+	int32_t gyro2[3];
 
 float body_angle,  body_angle_dot,  body_angle_dot_dot;
 float wheel_angle, wheel_angle_dot, wheel_angle_dot_dot;
@@ -84,12 +86,12 @@ void setup()
 	attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN1), dmpDataReady_2, RISING);
 
 	// Calibrate both MPU-6050 in acelX acelY acelZ gyroX gyroY gyroZ
-	setMPUofffset(mpu1, -2712,	-279,	1384,	103,	-6,	37); //
-	setMPUofffset(mpu2, 1131,	878,	1465,	1126,	47,	78);//
+	setMPUofffset(mpu1, -2761,  -1161, 864, 91,  -2,  -7); //
+	setMPUofffset(mpu2, -2743,  -283,  747, 42,  -32, 24);//
 
 
-	// Initialize the Nidec motor
-	nidec_motor_init();
+	// Initialize the motor, Nidec and Maxon;
+	// nidec_motor_init();
 
 	// TODO3: Test the servo
 
@@ -112,7 +114,7 @@ void loop()
 		// maxon.setMotor((int)motor_speed);
 
 		// Set Nidec motor speed
-		nidec_speed(20);
+		// nidec_speed(20);
 	}
 
 	// if programming failed, don't try to do anything
@@ -120,19 +122,31 @@ void loop()
 		// reset interrupt flag and get INT_STATUS byte
 		mpuInterrupt_1 = false;
 
-		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1, &aa1);
+		process_mpu_data(mpu1, packetSize_1, fifoCount_1, 1, &aa1, gyro1);
 	}
 
 	if (dmpReady_2) {
 
 		mpuInterrupt_2 = false;
 
-		process_mpu_data(mpu2, packetSize_2, fifoCount_2, 2, &aa2);
+		process_mpu_data(mpu2, packetSize_2, fifoCount_2, 2, &aa2, gyro2);
 	}
-    // Get the calculated angle and angle dot dot
-    tilt_estimation(&aa1, &aa2, &body_angle, &body_angle_dot_dot);
-      Serial.print("measured body angle: ");
-      Serial.println(body_angle);
-      Serial.print("body angular acceleration: ");
-      Serial.println(body_angle_dot_dot);
+
+	// TODO: build a new library depends on MPU6050_6Axis_MotionApps20 to get the accurate angle
+	// Get the calculated angle and angle dot dot
+	tilt_estimation(&aa1, &aa2, &body_angle);
+	Serial.print("measured body angle: \t");
+	Serial.println(body_angle);
+	Serial.print("gyro 1, x y z: ");
+	Serial.print(gyro1[0]);
+  Serial.print("\t");
+	Serial.print(gyro1[1]);
+  Serial.print("\t");
+	Serial.println(gyro1[2]);
+	Serial.print("gyro 2, x y z: ");
+	Serial.print(gyro2[0]);
+  Serial.print("\t");
+	Serial.print(gyro2[1]);
+  Serial.print("\t");
+	Serial.println(gyro2[2]);
 }
