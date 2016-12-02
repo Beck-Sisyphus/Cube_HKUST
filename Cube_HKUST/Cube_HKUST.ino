@@ -135,18 +135,17 @@ void loop()
 	// TODO: build a new library depends on MPU6050_6Axis_MotionApps20 to get the accurate angle
 	// Get the calculated angle and angle dot dot
 	tilt_estimation(&aa1, &aa2, &body_angle);
+	int16_t gx1, gy1, gz1, gx2, gy2, gz2;
+  // TODO: Add a Jacobian for frame transformation
+  // For right now assume mpu2 give a simular reading for angular velocity
+	mpu1.getRotation(&gx1, &gy1, &gz1);
+	mpu2.getRotation(&gx2, &gy2, &gz2);
 	Serial.print("measured body angle: \t");
 	Serial.println(body_angle);
-	Serial.print("gyro 1, x y z: ");
-	Serial.print(gyro1[0]);
-  Serial.print("\t");
-	Serial.print(gyro1[1]);
-  Serial.print("\t");
-	Serial.println(gyro1[2]);
 	Serial.print("gyro 2, x y z: ");
-	Serial.print(gyro2[0]);
-  Serial.print("\t");
-	Serial.print(gyro2[1]);
-  Serial.print("\t");
-	Serial.println(gyro2[2]);
+	Serial.print(gx2);
+	Serial.print("\t");
+	Serial.print(gy2);
+	Serial.print("\t");
+	Serial.println(gz2);
 }
