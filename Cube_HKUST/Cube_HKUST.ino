@@ -28,6 +28,8 @@ bool blinkState = false;
 #define I2C_SCL A5
 MPU6050 mpu1;
 MPU6050 mpu2(0x69);
+const int GYRO_SENSITIVITY = 131; // LSB / degree/s
+const float degreeToRadian = 0.0174533; // radian / degree
 
 	// MPU control/status vars
 	bool dmpReady_1 = false;  // set true if DMP init was successful
@@ -42,8 +44,8 @@ MPU6050 mpu2(0x69);
 	int32_t gyro1[3];
 	int32_t gyro2[3];
 
-float body_angle,  body_angle_dot,  body_angle_dot_dot;
-float wheel_angle, wheel_angle_dot, wheel_angle_dot_dot;
+float body_angle,  body_angle_dot;
+float wheel_angle, wheel_angle_dot;
 
 // Interrupt Detection Routine
 volatile bool mpuInterrupt_1 = false;     // indicates whether MPU interrupt pin has gone high
@@ -135,17 +137,13 @@ void loop()
 	// TODO: build a new library depends on MPU6050_6Axis_MotionApps20 to get the accurate angle
 	// Get the calculated angle and angle dot dot
 	tilt_estimation(&aa1, &aa2, &body_angle);
-	int16_t gx1, gy1, gz1, gx2, gy2, gz2;
-  // TODO: Add a Jacobian for frame transformation
-  // For right now assume mpu2 give a simular reading for angular velocity
-	mpu1.getRotation(&gx1, &gy1, &gz1);
-	mpu2.getRotation(&gx2, &gy2, &gz2);
+
+	// TODO: Add a Jacobian for frame transformation
+	// For right now assume mpu2 give a simular reading for angular velocity
+	int16_t gx2 = mpu2.getRotationX();
+	body_angle_dot = gx2 * degreeToRadian / GYRO_SENSITIVITY;
 	Serial.print("measured body angle: \t");
 	Serial.println(body_angle);
-	Serial.print("gyro 2, x y z: ");
-	Serial.print(gx2);
-	Serial.print("\t");
-	Serial.print(gy2);
-	Serial.print("\t");
-	Serial.println(gz2);
+	Serial.print("measured body angle velocity: \t");
+	Serial.println(body_angle_dot);
 }
