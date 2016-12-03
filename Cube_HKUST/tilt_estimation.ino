@@ -6,10 +6,7 @@
 // Parameter: filtered acceleration from IMU1 and IMU2
 // Return:  estimated angle and angular acceleration for the plane
 // TODO: principle components analysis for finding the rotational plane
-float envi_g = 9.81;
-int16_t imu_1_radius = 150; // millimeter
-int16_t imu_2_radius =  34; // millimeter
-int16_t imu_g = 8192;    // IMU scale for 1g
+
 uint8_t tilt_estimation(VectorInt16 *a1,VectorInt16 *a2, float *estimated_angle)
 {
     Serial.print("a1real.x\t");
@@ -34,4 +31,3 @@ uint8_t tilt_estimation(VectorInt16 *a1,VectorInt16 *a2, float *estimated_angle)
   //  float angular_acc_1 = -envi_g * ((float)a1->x / imu_g + (float)sin(*estimated_angle)) / imu_1_radius;
 //    float angular_acc_2 =  envi_g * ((float)a2->x / imu_g + (float)sin(*estimated_angle)) / imu_2_radius;
 //    *angular_acc = (imu_1_radius * angular_acc_1 + imu_2_radius * angular_acc_2) / (imu_1_radius + imu_2_radius);
-

@@ -2,34 +2,17 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "constant.h"
+#include "pinout.h"
 #include <Wire.h>
 // #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 #include "MPU6050_6Axis_MotionApps20.h"
-// #include <maxon.h>
+#include <maxon.h>
 
 // Maxon DEC 50/5 motor
-// Maxon maxon;
+Maxon maxon;
 
-// Nidec Motor, running in 12V, PWM controlled, with stop and direction control
-#define STOP_PIN 8 // Yellow wire, 3rd
-#define NIDEC_PWM_PIN 9 // White wire, 4th
-#define DIREC_PIN 10 // Green wire, 5th
-
-// LED for debugging
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
-bool blinkState = false;
-
-// MPU6050
-// pinout: 3.3v, GND, A4(SDA), A5(SCL), D2(external interrupt #0 pin)
-#define INTERRUPT_PIN0 2
-#define INTERRUPT_PIN1 3
-#define I2C_SDA A4
-#define I2C_SCL A5
 MPU6050 mpu1;
 MPU6050 mpu2(0x69);
-const int GYRO_SENSITIVITY = 131; // LSB / degree/s
-const float degreeToRadian = 0.0174533; // radian / degree
 
 	// MPU control/status vars
 	bool dmpReady_1 = false;  // set true if DMP init was successful
@@ -65,12 +48,6 @@ void setup()
 	Serial.begin(115200);
 	while (!Serial.available()) ;
 
-	// Set up Maxon motor
-	// maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_STATUS);
-	// maxon.setMode(SPEED_MODE_OPEN);
-	// maxon.setLEDDir(LED_SOURCE);
-	// maxon.disable();
-
 	// Initialize MPU, attach interrupt to pin 2
 	// Initialize two MPU in the same buss
 	mpu1.initialize();
@@ -94,6 +71,10 @@ void setup()
 
 	// Initialize the motor, Nidec and Maxon;
 	// nidec_motor_init();
+	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
+	maxon.setMode(SPEED_MODE_SLOW);
+	maxon.setLEDDir(LED_SOURCE);
+	maxon.disable();
 
 	// TODO3: Test the servo
 
@@ -111,9 +92,12 @@ void loop()
 	while ((!mpuInterrupt_1 && fifoCount_1 < packetSize_1) \
 			|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
 		// Set up Maxon motor
-		// double motor_speed = 0; // in radian.s^-1
-		// maxon.enable();
-		// maxon.setMotor((int)motor_speed);
+		double motor_speed = 0; // TODO: turn unit to radian.s^-1
+		maxon.enable();
+		maxon.setMotor((int)motor_speed);
+
+		wheel_angle_dot = maxon.getSpeedFeedback();
+		Serial.println(wheel_angle_dot);
 
 		// Set Nidec motor speed
 		// nidec_speed(20);
