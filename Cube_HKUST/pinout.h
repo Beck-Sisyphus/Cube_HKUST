@@ -2,20 +2,17 @@
 #define CONSTANT_H
 
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 //Maxon motor controller pins, running in 24V, PWM controlled
 #define P_MAXON_SPEED 5 // PWM pin, pin 26 on the drive
-#define P_MAXON_DIR 6	// pin 23 on the drive
-#define P_MAXON_EN 7	// pin 22
-#define P_MAXON_IN2 8	// pin 21
-#define P_MAXON_IN1 9	// pin 20
+#define P_MAXON_DIR 6  // pin 23 on the drive
+#define P_MAXON_EN 7  // pin 22
+#define P_MAXON_IN2 8 // pin 21
+#define P_MAXON_IN1 9 // pin 20
 #define P_MAXON_READY 10// pin 19
 #define P_MAXON_FEEDBACK A0 // pin 18
 
-
-#define P_MAXON_STATUS 12
+#define P_MAXON_STATUS 13
 
 // Nidec Motor, running in 12V, PWM controlled, with stop and direction control
 #define NIDEC_STOP_PIN 8 // Yellow wire, 3rd

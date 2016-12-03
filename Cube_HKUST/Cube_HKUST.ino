@@ -1,12 +1,10 @@
 #include <Arduino.h>
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "pinout.h"
 #include <Wire.h>
 // #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 #include "MPU6050_6Axis_MotionApps20.h"
-#include <maxon.h>
+#include "maxon.h"
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
@@ -73,9 +71,7 @@ void setup()
 	// nidec_motor_init();
 	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
 	maxon.setMode(SPEED_MODE_SLOW);
-	maxon.setLEDDir(LED_SOURCE);
-	maxon.disable();
-
+ 
 	// TODO3: Test the servo
 
 	// TODO4: Test the encoder
@@ -86,21 +82,36 @@ void setup()
 	pinMode(LED_PIN, OUTPUT);
 }
 
+int i = 0;
+bool notflip = true;
 void loop()
 {
 	// wait for MPU interrupt or extra packet(s) available
 	while ((!mpuInterrupt_1 && fifoCount_1 < packetSize_1) \
 			|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
-		// Set up Maxon motor
-		double motor_speed = 0; // TODO: turn unit to radian.s^-1
-		maxon.enable();
-		maxon.setMotor((int)motor_speed);
+    // Set up Maxon motor
+    if (i >= 255) {
+      notflip = false;
+    }  else if ( i <= 0 ) {
+      notflip = true;
+    }
+    if (notflip) {
+      i++;
+    } else {
+      i--;
+    }
+    // TODO: turn unit to radian.s^-1
+    maxon.enable();
+    maxon.setMotor(i);
 
-		wheel_angle_dot = maxon.getSpeedFeedback();
-		Serial.println(wheel_angle_dot);
+    float wheel_angle_dot = maxon.getSpeedFeedback();
+    
+    Serial.print(i);
+    Serial.print("\t");
+    Serial.println(wheel_angle_dot);
 
 		// Set Nidec motor speed
-		// nidec_speed(20);
+		nidec_speed(20);
 	}
 
 	// if programming failed, don't try to do anything
@@ -130,4 +141,5 @@ void loop()
 	Serial.println(body_angle);
 	Serial.print("measured body angle velocity: \t");
 	Serial.println(body_angle_dot);
+  delay(100);
 }
