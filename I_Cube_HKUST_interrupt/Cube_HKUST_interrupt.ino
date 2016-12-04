@@ -90,11 +90,11 @@ void setup()
 	// TODO3: Test the servo
 
 	// TODO4: Test the encoder
-  #if MEGA_ADK
+    #if MEGA_ADK
     Serial1.begin(38400);
-  #else
-	 encoderSerial.begin(38400);
-  #endif
+    #else
+    encoderSerial.begin(38400);
+    #endif
 
 	// Final TODO5: implement the LQR controller, online or offline
 
