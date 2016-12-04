@@ -5,9 +5,13 @@
 // #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "maxon.h"
+#include <SoftwareSerial.h>
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
+
+// Encoder serial
+SoftwareSerial encoderSerial(SOFT_RX, SOFT_TX);
 
 MPU6050 mpu1;
 MPU6050 mpu2(0x69);
@@ -71,10 +75,12 @@ void setup()
 	// nidec_motor_init();
 	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
 	maxon.setMode(SPEED_MODE_SLOW);
- 
+
 	// TODO3: Test the servo
 
 	// TODO4: Test the encoder
+	encoderSerial.begin(115200);
+	encoderSerial.println("connection established");
 
 	// Final TODO5: implement the LQR controller, online or offline
 
@@ -82,33 +88,33 @@ void setup()
 	pinMode(LED_PIN, OUTPUT);
 }
 
-int i = 0;
-bool notflip = true;
+int moter_speed = 0; // command value
+
 void loop()
 {
 	// wait for MPU interrupt or extra packet(s) available
 	while ((!mpuInterrupt_1 && fifoCount_1 < packetSize_1) \
-			|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
-    // Set up Maxon motor
-    if (i >= 255) {
-      notflip = false;
-    }  else if ( i <= 0 ) {
-      notflip = true;
-    }
-    if (notflip) {
-      i++;
-    } else {
-      i--;
-    }
-    // TODO: turn unit to radian.s^-1
-    maxon.enable();
-    maxon.setMotor(i);
+		|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
+		// Set up Maxon motor
+		if (i >= 255) {
+		  notflip = false;
+		}  else if ( i <= 0 ) {
+		  notflip = true;
+		}
+		if (notflip) {
+		  i++;
+		} else {
+		  i--;
+		}
 
-    float wheel_angle_dot = maxon.getSpeedFeedback();
-    
-    Serial.print(i);
-    Serial.print("\t");
-    Serial.println(wheel_angle_dot);
+		maxon.enable();
+		maxon.setMotor(i);
+
+		float wheel_angle_dot = maxon.getSpeedFeedback();
+
+		Serial.print(i);
+		Serial.print("\t");
+		Serial.println(wheel_angle_dot);
 
 		// Set Nidec motor speed
 		nidec_speed(20);

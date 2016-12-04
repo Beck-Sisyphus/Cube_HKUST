@@ -26,7 +26,11 @@
 #define I2C_SDA A4
 #define I2C_SCL A5
 const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
-const float degreeToRadian = 0.0174533; // radian / degree
+const float degreeToRadian = 0.017453; // radian / degree
+
+// Encoder SoftwareSerial
+#define SOFT_RX A2
+#define SOFT_TX A3
 
 const int16_t imu_1_radius = 150; // millimeter
 const int16_t imu_2_radius =  34; // millimeter
