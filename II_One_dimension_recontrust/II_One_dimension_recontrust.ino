@@ -7,9 +7,10 @@
 #include "MPU6050.h"
 #include "helper_3dmath.h"
 #include "maxon.h"
+#include "Cube_Controller.h"
 
 #define MAXON_ON false
-#define DEBUG true
+#define DEBUG false
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
@@ -56,7 +57,7 @@ void setup()
     Serial1.begin(38400);
 
 	// Final TODO5: implement the LQR controller, online or offline
-
+  Cube_Controller_SetUp();
 }
 
 void loop()
@@ -105,4 +106,9 @@ void loop()
 		Serial.print("\t");
 		Serial.println(body_angle_dot);
 	#endif
+  Cube_Controller (body_angle,body_angle_dot,wheel_angle_dot);
+  Serial.print(body_angle,6);
+  //Serial.print(body_angle_dot);
+  //Serial.print(wheel_angle_dot);
+  Serial.print("\r\n");
 }
