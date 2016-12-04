@@ -23,8 +23,10 @@
 // pinout: 3.3v, GND, A4(SDA), A5(SCL), D2(external interrupt #0 pin)
 #define INTERRUPT_PIN0 2
 #define INTERRUPT_PIN1 3
-#define I2C_SDA A4
-#define I2C_SCL A5
+//#define I2C_SDA A4
+//#define I2C_SCL A5
+#define I2C_SDA 20
+#define I2C_SCL 21
 const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
 const float degreeToRadian = 0.017453; // radian / degree
 const float REV_TO_RADIAN = 6.283185;

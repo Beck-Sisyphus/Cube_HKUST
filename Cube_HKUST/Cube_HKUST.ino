@@ -10,12 +10,15 @@
 
 #define MAXON_ON false
 #define DEBUG false
+#define MEGA_ADK true
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
 
 // Encoder serial
-SoftwareSerial encoderSerial(SOFT_RX, SOFT_TX);
+#if !MEGA_ADK
+  SoftwareSerial encoderSerial(SOFT_RX, SOFT_TX);
+#endif
 
 MPU6050 mpu1;
 MPU6050 mpu2(0x69);
@@ -87,8 +90,11 @@ void setup()
 	// TODO3: Test the servo
 
 	// TODO4: Test the encoder
+  #if MEGA_ADK
+    Serial1.begin(38400);
+  #else
 	 encoderSerial.begin(38400);
-	 encoderSerial.println("connection established");
+  #endif
 
 	// Final TODO5: implement the LQR controller, online or offline
 
@@ -120,12 +126,20 @@ void loop()
 			Serial.print(i);
 		#else
       int encoder_feedback = 0;
+      String incomeByte;
 			// Get info from encoder Serial
-			if (encoderSerial.available()) {
-				String incomeByte = encoderSerial.readStringUntil('\r');
-				encoder_feedback = incomeByte.toInt();
-				wheel_angle_dot = (float)(2 * M_PI * encoder_feedback * 100) / 1024;
-			}
+      #if MEGA_ADK
+      if (Serial1.available()) {
+        incomeByte = Serial1.readStringUntil('\r');
+      }
+      #else
+      if (encoderSerial.available()) {
+        incomeByte = encoderSerial.readStringUntil('\r');
+      }
+      #endif
+      encoder_feedback = incomeByte.toInt();
+      wheel_angle_dot = (float)(2 * M_PI * encoder_feedback * 100) / 1024;
+
 
 			// Set Nidec motor speed
 			input_current = 200;
