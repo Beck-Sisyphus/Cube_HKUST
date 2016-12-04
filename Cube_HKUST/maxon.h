@@ -49,13 +49,6 @@ private:
     // Store the mode
     int p_mode;
 
-    #define REV_TO_RADIAN = 6.283185;
-    #define RADIAN_TO_REV = 0.159155;
-    #define MAX_RPM_SLOW = 625;
-    #define MAX_RPM_MID  = 2500;
-    #define MAX_RPM_FAST = 10000;
-    #define MAX_PWM = 256;
-
 public:
     Maxon();
 
@@ -81,6 +74,13 @@ public:
 
     // Get the calculated motor speed in radian.s^-1
     float getSpeedFeedback();
+
+    const int MAX_RPM_SLOW = 625;
+    const int MAX_RPM_MID  = 2500;
+    const int MAX_RPM_FAST = 10000;
+    const int MAX_PWM = 256;
+    const float REV_TO_RADIAN = 6.283185;
+    const float RADIAN_TO_REV = 0.159155;
 };
 
 #endif

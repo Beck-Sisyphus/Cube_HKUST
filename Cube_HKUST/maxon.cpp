@@ -64,22 +64,23 @@ void Maxon::setMotor(int speed)
     }
 }
 
+// TODO: Check the open loop value
 void Maxon::setMotorinRadian(float speedInRadian)
 {
     int command_value;
-    float speedInRevolution = speedInRadian * RADIAN_TO_REV;
+    float speedInRev = speedInRadian * RADIAN_TO_REV;
     switch (p_mode) {
         case SPEED_MODE_OPEN:
-            command_value = speedInRevolution;
+            command_value = (int)speedInRev > MAX_RPM_FAST ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_FAST;
         break;
         case SPEED_MODE_SLOW:
-            command_value = MAX_PWM * (speedInRevolution > MAX_RPM_SLOW) ? ;
+            command_value = (int)speedInRev > MAX_RPM_SLOW ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_SLOW;
         break;
         case SPEED_MODE_MED:
-
+            command_value = (int)speedInRev > MAX_RPM_MID  ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_MID ;
         break;
         case SPEED_MODE_FAST:
-
+            command_value = (int)speedInRev > MAX_RPM_FAST ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_FAST;
         break;
     }
     setMotor(command_value);

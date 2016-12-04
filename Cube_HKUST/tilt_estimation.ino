@@ -9,6 +9,7 @@
 
 uint8_t tilt_estimation(VectorInt16 *a1,VectorInt16 *a2, float *estimated_angle)
 {
+    #if DEBUG
     Serial.print("a1real.x\t");
   	Serial.print(a1->x);
     Serial.print("a1real.y\t");
@@ -17,6 +18,7 @@ uint8_t tilt_estimation(VectorInt16 *a1,VectorInt16 *a2, float *estimated_angle)
   	Serial.print(-1 * a2->x);
     Serial.print("a2real.y\t");
     Serial.println(-1 * a2->y);
+    #endif
 
     float mx = -a1->x - (float) (imu_1_radius / imu_2_radius) * a2->x;
     float my = -a1->y - (float) (imu_1_radius / imu_2_radius) * a2->y;

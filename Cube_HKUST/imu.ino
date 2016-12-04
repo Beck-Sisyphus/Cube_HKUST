@@ -19,21 +19,17 @@ bool test_dmp_connection(MPU6050 mpu, uint16_t &packetSize) {
 	bool dmpReady;
 
 	// load and configure the DMP
-	Serial.println("Initializing DMP...");
 	devStatus = mpu.dmpInitialize();
 
 	// make sure it worked (returns 0 if so)
 	if (devStatus == 0) {
 		// turn on the DMP, now that it's ready
-		Serial.println("Enabling DMP...");
 		mpu.setDMPEnabled(true);
 
 		// enable Arduino interrupt detection
-		Serial.println("Enabling interrupt detection (Arduino external interrupt 0)...");
 		mpu.getIntStatus();
 
 		// set our DMP Ready flag so the main loop() function knows it's okay to use it
-		Serial.println("DMP ready! Waiting for first interrupt...");
 		dmpReady = true;
 
 		// get expected DMP packet size for later comparison
@@ -70,8 +66,8 @@ void process_mpu_data(MPU6050 mpu, uint16_t &packetSize, uint16_t &fifoCount, in
 	if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
 		// reset so we can continue cleanly
 		mpu.resetFIFO();
-		Serial.print("FIFO overflow! mpu");
-    Serial.println(number);
+		// Serial.print("FIFO overflow! mpu");
+    // Serial.println(number);
 
 	// otherwise, check for DMP data ready interrupt (this should happen frequently)
 	} else if (mpuIntStatus & 0x02) {

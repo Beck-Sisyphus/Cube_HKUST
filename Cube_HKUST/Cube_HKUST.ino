@@ -6,6 +6,10 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "maxon.h"
 #include <SoftwareSerial.h>
+#include <String.h>
+
+#define MAXON_ON false
+#define DEBUG false
 
 // Maxon DEC 50/5 motor
 Maxon maxon;
@@ -31,6 +35,7 @@ MPU6050 mpu2(0x69);
 
 float body_angle,  body_angle_dot;
 float wheel_angle, wheel_angle_dot;
+float input_current;
 
 // Interrupt Detection Routine
 volatile bool mpuInterrupt_1 = false;     // indicates whether MPU interrupt pin has gone high
@@ -72,52 +77,66 @@ void setup()
 
 
 	// Initialize the motor, Nidec and Maxon;
-	// nidec_motor_init();
+	#if MAXON_ON
 	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
 	maxon.setMode(SPEED_MODE_SLOW);
+	#else
+	nidec_motor_init();
+	#endif
 
 	// TODO3: Test the servo
 
 	// TODO4: Test the encoder
-	encoderSerial.begin(115200);
-	encoderSerial.println("connection established");
+	 encoderSerial.begin(38400);
+	 encoderSerial.println("connection established");
 
 	// Final TODO5: implement the LQR controller, online or offline
 
-	// configure LED for debugging
-	pinMode(LED_PIN, OUTPUT);
 }
 
-int moter_speed = 0; // command value
+#if MAXON_ON
+int i = 0;
+bool notflip = false;
+#endif
 
 void loop()
 {
 	// wait for MPU interrupt or extra packet(s) available
 	while ((!mpuInterrupt_1 && fifoCount_1 < packetSize_1) \
 		|| (!mpuInterrupt_2 && fifoCount_2 < packetSize_2)) {
-		// Set up Maxon motor
-		if (i >= 255) {
-		  notflip = false;
-		}  else if ( i <= 0 ) {
-		  notflip = true;
-		}
-		if (notflip) {
-		  i++;
-		} else {
-		  i--;
-		}
 
-		maxon.enable();
-		maxon.setMotor(i);
+		#if MAXON_ON
+			// Set up Maxon motor
+			if (i >= 255) { notflip = false;}
+			else if ( i <= 0 ) { notflip = true; }
+			if (notflip) { i++; }
+			else { i--; }
 
-		float wheel_angle_dot = maxon.getSpeedFeedback();
+			maxon.enable();
+			maxon.setMotor(i);
 
-		Serial.print(i);
+			wheel_angle_dot = maxon.getSpeedFeedback();
+
+			Serial.print(i);
+		#else
+      int encoder_feedback = 0;
+			// Get info from encoder Serial
+			if (encoderSerial.available()) {
+				String incomeByte = encoderSerial.readStringUntil('\r');
+				encoder_feedback = incomeByte.toInt();
+				wheel_angle_dot = (float)(2 * M_PI * encoder_feedback * 100) / 1024;
+			}
+
+			// Set Nidec motor speed
+			input_current = 200;
+			nidec_speed(input_current);
+		#endif
+
+    //#if DEBUG
+    Serial.print(encoder_feedback);
 		Serial.print("\t");
 		Serial.println(wheel_angle_dot);
-
-		// Set Nidec motor speed
-		nidec_speed(20);
+    //#endif
 	}
 
 	// if programming failed, don't try to do anything
@@ -142,10 +161,14 @@ void loop()
 	// TODO: Add a Jacobian for frame transformation
 	// For right now assume mpu2 give a simular reading for angular velocity
 	int16_t gx2 = mpu2.getRotationX();
-	body_angle_dot = gx2 * degreeToRadian / GYRO_SENSITIVITY;
+	body_angle_dot = (float)(gx2 * degreeToRadian) / (float)GYRO_SENSITIVITY;
+	#if DEBUG
 	Serial.print("measured body angle: \t");
 	Serial.println(body_angle);
 	Serial.print("measured body angle velocity: \t");
+  Serial.print(gx2);
+  Serial.print("\t");
 	Serial.println(body_angle_dot);
-  delay(100);
+  #endif
+//  delay(100);
 }

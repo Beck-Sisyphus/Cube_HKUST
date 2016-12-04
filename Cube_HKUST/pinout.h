@@ -27,6 +27,8 @@
 #define I2C_SCL A5
 const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
 const float degreeToRadian = 0.017453; // radian / degree
+const float REV_TO_RADIAN = 6.283185;
+const float RADIAN_TO_REV = 0.159155;
 
 // Encoder SoftwareSerial
 #define SOFT_RX A2
