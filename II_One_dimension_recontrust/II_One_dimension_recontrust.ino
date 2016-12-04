@@ -1,15 +1,14 @@
 #include <Arduino.h>
 #include <math.h>
 #include <Wire.h>
-#include <SoftwareSerial.h>
 #include <String.h>
 #include "pinout.h"
 #include "MPU6050.h"
 #include "helper_3dmath.h"
 #include "maxon.h"
 #include "Cube_Controller.h"
+#include "TimerOne.h"
 
-#define MAXON_ON false
 #define DEBUG false
 
 // Maxon DEC 50/5 motor
@@ -18,9 +17,12 @@ Maxon maxon;
 MPU6050 mpu1;
 MPU6050 mpu2(0x69);
 
-float body_angle,  body_angle_dot;
+float body_angle, body_angle_dot;
+float body_angle_LPF = 0;
 float wheel_angle_dot;
 float input_current;
+const float alpha_body_angle = 0.3;
+
 
 void setup()
 {
@@ -44,12 +46,8 @@ void setup()
 	setMPUofffset(mpu2, -2743,  -283,  747, 42,  -32, 24);//
 
 	// Initialize the motor, Nidec and Maxon;
-	#if MAXON_ON
-		maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
-		maxon.setMode(SPEED_MODE_SLOW);
-	#else
-		nidec_motor_init();
-	#endif
+	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
+	maxon.setMode(SPEED_MODE_SLOW);
 
 	// TODO3: Test the servo
 
@@ -57,58 +55,46 @@ void setup()
     Serial1.begin(38400);
 
 	// Final TODO5: implement the LQR controller, online or offline
-  Cube_Controller_SetUp();
+	Cube_Controller_SetUp();
+
+	// Set up the timer
+	Timer1.initialize(20000); // set a timer of length 100000 microseconds (or 0.1 sec - or 10Hz => the led will blink 5 times, 5 cycles of on-and-off, per second)
+	Timer1.attachInterrupt( timerIsr ); // attach the service routine here
 }
 
 void loop()
 {
-		#if MAXON_ON
-		// Set up Maxon motor
-		maxon.enable();
-		maxon.setMotor(0);
-
-		wheel_angle_dot = maxon.getSpeedFeedback();
-		#else
-		int encoder_feedback = 0;
-		String incomeByte;
-		// Get info from encoder Serial
-
-		if (Serial1.available()) {
-			incomeByte = Serial1.readStringUntil('\r');
-		}
-
-		encoder_feedback = incomeByte.toInt();
-		wheel_angle_dot = (float)(2 * M_PI * encoder_feedback * 100) / 1024;
-
-		// Set Nidec motor speed
-		input_current = 200;
-		nidec_speed(input_current);
-		#endif
-
-		#if DEBUG
-		Serial.print(encoder_feedback);
-		Serial.print("\t");
-		Serial.println(wheel_angle_dot);
-		#endif
-
 	// Get the calculated angle and angle dot dot
 	tilt_estimation(mpu1, mpu2, &body_angle);
 
+	body_angle_LPF = (1 - alpha_body_angle) * body_angle_LPF + alpha_body_angle * body_angle;
 	// TODO: Add a Jacobian for frame transformation
 	// For right now assume mpu2 give a simular reading for angular velocity
 	int16_t gx2 = mpu2.getRotationX();
 	body_angle_dot = (float)(gx2 * degreeToRadian) / (float)GYRO_SENSITIVITY;
+
+	// Set up Maxon motor
+	maxon.enable();
+
+	wheel_angle_dot = maxon.getSpeedFeedback();
+
+	input_current = Cube_LQR_Controller(body_angle_LPF,body_angle_dot,wheel_angle_dot);
+
 	#if DEBUG
-		Serial.print("measured body angle: \t");
-		Serial.println(body_angle);
-		Serial.print("measured body angle velocity: \t");
-		Serial.print(gx2);
-		Serial.print("\t");
-		Serial.println(body_angle_dot);
+		Serial.print(body_angle, 6);
+		Serial.print(",");
+		Serial.print(body_angle_dot, 6);
+		Serial.print(", ");
+		Serial.print(wheel_angle_dot, 6);
+		Serial.print("\r\n");
 	#endif
-  Cube_Controller (body_angle,body_angle_dot,wheel_angle_dot);
-  Serial.print(body_angle,6);
-  //Serial.print(body_angle_dot);
-  //Serial.print(wheel_angle_dot);
-  Serial.print("\r\n");
+}
+
+/// --------------------------
+/// Custom ISR Timer Routine
+/// --------------------------
+void timerIsr()
+{
+	// Set the maxon current every 20ms
+	maxon.setMotorCurrent(input_current);
 }

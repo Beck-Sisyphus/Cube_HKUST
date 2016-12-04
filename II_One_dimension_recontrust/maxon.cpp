@@ -65,10 +65,10 @@ void Maxon::setMotor(int speed)
 }
 
 // TODO: Check the open loop value
-void Maxon::setMotorinRadian(float speedInRadian)
+void Maxon::setMotorCurrent(float current)
 {
     int command_value;
-    float speedInRev = speedInRadian * RADIAN_TO_REV;
+    float speedInRev = current * CURRENT_TO_REV;
     switch (p_mode) {
         case SPEED_MODE_OPEN:
             command_value = (int)speedInRev > MAX_RPM_FAST ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_FAST;

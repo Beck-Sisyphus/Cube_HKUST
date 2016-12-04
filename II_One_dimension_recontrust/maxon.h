@@ -60,7 +60,7 @@ public:
 
     //Drives the motor at the given speed
     void setMotor(int speed);
-    void setMotorinRadian(float speedInRadian);
+    void setMotorCurrent(float current);
 
     //Enable or disable motor drive output
     void enable();
@@ -81,6 +81,7 @@ public:
     const int MAX_PWM = 256;
     const float REV_TO_RADIAN = 6.283185;
     const float RADIAN_TO_REV = 0.159155;
+    const int CURRENT_TO_REV = 2125;
 };
 
 #endif
