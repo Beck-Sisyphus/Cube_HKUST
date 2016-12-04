@@ -4,13 +4,13 @@
 #include <math.h>
 
 //Maxon motor controller pins, running in 24V, PWM controlled
-#define P_MAXON_SPEED 5 // PWM pin, pin 26 on the drive
-#define P_MAXON_DIR 6  // pin 23 on the drive
-#define P_MAXON_EN 7  // pin 22
-#define P_MAXON_IN2 8 // pin 21
-#define P_MAXON_IN1 9 // pin 20
-#define P_MAXON_READY 10// pin 19
-#define P_MAXON_FEEDBACK A0 // pin 18
+#define P_MAXON_SPEED 44 //5 // PWM pin, pin 26 on the drive
+#define P_MAXON_DIR 42//6  // pin 23 on the drive
+#define P_MAXON_EN  40//7  // pin 22
+#define P_MAXON_IN2 38//8 // pin 21
+#define P_MAXON_IN1 36//9 // pin 20
+#define P_MAXON_READY 34//10// pin 19
+#define P_MAXON_FEEDBACK 32//A0 // pin 18
 
 #define P_MAXON_STATUS 13
 

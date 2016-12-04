@@ -47,7 +47,8 @@ void setup()
 
 	// Initialize the motor, Nidec and Maxon;
 	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
-	maxon.setMode(SPEED_MODE_SLOW);
+	maxon.setMode(SPEED_MODE_OPEN);
+  maxon.enable();
 
 	// TODO3: Test the servo
 
@@ -73,12 +74,9 @@ void loop()
 	int16_t gx2 = mpu2.getRotationX();
 	body_angle_dot = (float)(gx2 * degreeToRadian) / (float)GYRO_SENSITIVITY;
 
-	// Set up Maxon motor
-	maxon.enable();
-
 	wheel_angle_dot = maxon.getSpeedFeedback();
 
-	input_current = Cube_LQR_Controller(body_angle_LPF,body_angle_dot,wheel_angle_dot);
+	input_current = Cube_LQR_Controller(body_angle,body_angle_dot,wheel_angle_dot);
 
 	#if DEBUG
 		Serial.print(body_angle, 6);
@@ -86,7 +84,9 @@ void loop()
 		Serial.print(body_angle_dot, 6);
 		Serial.print(", ");
 		Serial.print(wheel_angle_dot, 6);
-		Serial.print("\r\n");
+    Serial.print(", ");
+    Serial.print(input_current, 6);
+		Serial.println("\r\n");
 	#endif
 }
 
@@ -96,5 +96,5 @@ void loop()
 void timerIsr()
 {
 	// Set the maxon current every 20ms
-	maxon.setMotorCurrent(input_current);
+	maxon.setMotor((int)input_current / 10);
 }
