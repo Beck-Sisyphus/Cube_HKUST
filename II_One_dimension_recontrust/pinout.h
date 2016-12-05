@@ -12,7 +12,7 @@
 #define P_MAXON_READY 34//10// pin 19
 #define P_MAXON_FEEDBACK 32//A0 // pin 18
 
-#define P_MAXON_STATUS 13
+#define P_MAXON_STATUS A0
 
 // Nidec Motor, running in 12V, PWM controlled, with stop and direction control
 #define NIDEC_STOP_PIN 8 // Yellow wire, 3rd
@@ -27,8 +27,9 @@
 //#define I2C_SCL A5
 #define I2C_SDA 20
 #define I2C_SCL 21
-const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
-const float degreeToRadian = 0.017453; // radian / degree
+// const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
+// const float degreeToRadian = 0.017453; // radian / degree
+const int16_t gyroToRadian = 133; // E-6radian/s / LSB
 const float REV_TO_RADIAN = 6.283185;
 const float RADIAN_TO_REV = 0.159155;
 

@@ -64,28 +64,6 @@ void Maxon::setMotor(int speed)
     }
 }
 
-// TODO: Check the open loop value
-void Maxon::setMotorCurrent(float current)
-{
-    int command_value;
-    float speedInRev = current * CURRENT_TO_REV;
-    switch (p_mode) {
-        case SPEED_MODE_OPEN:
-            command_value = (int)speedInRev > MAX_RPM_FAST ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_FAST;
-        break;
-        case SPEED_MODE_SLOW:
-            command_value = (int)speedInRev > MAX_RPM_SLOW ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_SLOW;
-        break;
-        case SPEED_MODE_MED:
-            command_value = (int)speedInRev > MAX_RPM_MID  ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_MID ;
-        break;
-        case SPEED_MODE_FAST:
-            command_value = (int)speedInRev > MAX_RPM_FAST ? MAX_PWM : (int)MAX_PWM * speedInRev / MAX_RPM_FAST;
-        break;
-    }
-    setMotor(command_value);
-}
-
 //Enable the motor drive output
 void Maxon::enable()
 {
@@ -111,8 +89,7 @@ void Maxon::setMode(int mode)
 {
     if (started)
     {
-        p_mode = mode;
-        switch (p_mode) {
+        switch (mode) {
             case SPEED_MODE_OPEN:
                 digitalWrite(p_in1, LOW);
                 digitalWrite(p_in2, LOW);
@@ -135,16 +112,15 @@ void Maxon::setMode(int mode)
     }
 }
 
-// Get the calculated motor speed in radian.s^-1
-// n = f * 20 / z_pol, z_pol = number of pole pairs of motor = 8
+// Get the calculated motor speed in Hz
+// n = f * 20 / z_pol, z_pol = number of pole pairs of motor = 3
 float Maxon::getSpeedFeedback()
 {
-    int z_pol = 8; // number of pole pairs of motor
+    int z_pol = 3; // number of pole pairs of motor
     int H_time = pulseIn(p_feedback, HIGH);
-    int L_time = pulseIn(p_feedback, LOW );
+    int L_time = pulseIn(p_feedback, LOW);
     float T_time = H_time + L_time; // in microseconds
     float freq = 1000000 / T_time;
-    float freq_in_Revolution = freq * 20 / z_pol;
-    float freq_in_Radian = freq_in_Revolution * REV_TO_RADIAN;
-    return freq_in_Radian;
+    float freq_in_Hz = freq * 20 / z_pol;
+    return freq_in_Hz;
 }
