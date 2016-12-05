@@ -46,6 +46,8 @@ private:
     int led_dir;
     //True if begin has been called
     bool started;
+    // Store the mode
+    int p_mode;
 
 public:
     Maxon();
@@ -58,6 +60,7 @@ public:
 
     //Drives the motor at the given speed
     void setMotor(int speed);
+    void setMotorCurrent(float current);
 
     //Enable or disable motor drive output
     void enable();
@@ -69,8 +72,16 @@ public:
     //Set the speed mode (see definitions above)
     void setMode(int mode);
 
-    // Get the calculated motor speed in Hz
+    // Get the calculated motor speed in radian.s^-1
     float getSpeedFeedback();
+
+    const int MAX_RPM_SLOW = 625;
+    const int MAX_RPM_MID  = 2500;
+    const int MAX_RPM_FAST = 10000;
+    const int MAX_PWM = 256;
+    const float REV_TO_RADIAN = 6.283185;
+    const float RADIAN_TO_REV = 0.159155;
+    const int CURRENT_TO_REV = 2125;
 };
 
 #endif
