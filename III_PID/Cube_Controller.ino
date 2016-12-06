@@ -2,7 +2,7 @@
 //#define LQR_Type
 #define PID_Type
 
-#define Angle_offset -0.12
+#define Angle_offset -0.116
 #define Angle_dot_offset -0.11011
 #define Trust_Value 0.1
 
@@ -13,6 +13,9 @@ float Voltage_now;
 int First_Flag=0;
 float Angle_final;
 float Angle_final_prev;
+int Kd_Counter;
+float Angle_dot_Kd;
+float Angle_dot_Kd_now;
 #ifdef  LQR_Type
     /* Low Pass Filter */
     float State_LPF, State_LPF_Next=0;// Apply LPF in Tilt Angle
@@ -34,8 +37,8 @@ void Cube_Controller_SetUp ( void )
         Kd[2] = -0.6265;
     #endif
     #ifdef  PID_Type
-        Kp = 300;
-        Kd = 5000;
+        Kp = 450;
+        Kd = 8000;
     #endif
 }
 
@@ -53,7 +56,6 @@ int Cube_Controller( float body_angle, float body_angle_dot, float wheel_angle_d
     }
     Angle_gyro = Angle_final - State_bar[1]*0.001;
     Angle_final = State_bar[0] * Trust_Value + Angle_gyro * (1 - Trust_Value);
-
 
     #ifdef  LQR_Type
         //Low Pass Filter Get Value
@@ -76,9 +78,21 @@ int Cube_Controller( float body_angle, float body_angle_dot, float wheel_angle_d
         State_LPF_Next = (1- Alpha_LPF)*State_LPF + Alpha_LPF*State_bar[0];
     #endif
     #ifdef  PID_Type
+       if (Kd_Counter<=4)
+       {
+            Angle_dot_Kd = (Angle_dot_Kd  -Angle_final +Angle_final_prev)/2;
+       }
+       if (Kd_Counter == 4)
+       {
+            Angle_dot_Kd_now = Angle_dot_Kd;
+       }
        // Voltage_now = Kp * (-State_bar[0] + Angle_offset) + Kd * (State_bar[1]- Angle_dot_offset);
-       Voltage_now = Kp * (-Angle_final) + Kd * (-Angle_final +Angle_final_prev);
+       Voltage_now = Kp * (-Angle_final) + Kd * Angle_dot_Kd_now;
     #endif
+  Serial.print(Kp * (-Angle_final));
+  Serial.print(",");
+  Serial.print(Kd * (-Angle_final +Angle_final_prev));
+  Serial.print("\r\n");
     State_prev[0] = State_bar[0];
     State_prev[1] = State_bar[1];
     State_prev[2] = State_bar[2];
