@@ -73,14 +73,14 @@ public:
     void setMode(int mode);
 
     // Get the calculated motor speed in radian.s^-1
-    float getSpeedFeedback();
+    float getSpeedFeedback(unsigned int sampled_frequency);
 
     const int MAX_RPM_SLOW = 625;
     const int MAX_RPM_MID  = 2500;
     const int MAX_RPM_FAST = 10000;
     const int MAX_PWM = 256;
-    const float REV_TO_RADIAN = 6.283185;
-    const float RADIAN_TO_REV = 0.159155;
+    const float REV_TO_RADIAN = 0.10472;  // revolution per minutes to radian per sec
+    const float RADIAN_TO_REV = 9.5493;
     const int CURRENT_TO_REV = 2125;
 };
 

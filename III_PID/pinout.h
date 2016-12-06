@@ -41,6 +41,11 @@ const int16_t imu_1_radius = 150; // millimeter
 const int16_t imu_2_radius =  34; // millimeter
 const int16_t IMU_SENSITIVITY = 8192;    // IMU scale for 1g
 
+// Timer
+// From the schematics, the pin 9 on Mega is corresponding PE7, which is ICP3
+#define ICP4 49 // PL0, ICP4
+#define ICP5 48 // PL1, ICP5
+
 // LED for debugging
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 

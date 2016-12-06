@@ -136,15 +136,12 @@ void Maxon::setMode(int mode)
 }
 
 // Get the calculated motor speed in radian.s^-1
-// n = f * 20 / z_pol, z_pol = number of pole pairs of motor = 8
-float Maxon::getSpeedFeedback()
+// Input:  frequency from timer 4 in rpm
+// Output: speed n = f * 20 / z_pol, and turn rpm to radian.s^-s
+float Maxon::getSpeedFeedback(unsigned int sampled_frequency)
 {
     int z_pol = 8; // number of pole pairs of motor
-    int H_time = pulseIn(p_feedback, HIGH);
-    int L_time = pulseIn(p_feedback, LOW );
-    float T_time = H_time + L_time; // in microseconds
-    float freq = 1000000 / T_time;
-    float freq_in_Revolution = freq * 20 / z_pol;
+    float freq_in_Revolution = sampled_frequency * 20 / z_pol;
     float freq_in_Radian = freq_in_Revolution * REV_TO_RADIAN;
     return freq_in_Radian;
 }
