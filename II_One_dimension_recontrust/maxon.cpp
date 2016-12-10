@@ -18,6 +18,8 @@ void Maxon::begin(int in1, int in2, int dir, int en, int spd, int rdy, int feedb
     p_rdy = rdy;
     p_feedback = feedback;
     p_led = led;
+    tar_dir_positive = true;
+    real_dir_positive = true;
 
     //Setup pins
     pinMode(p_in1, OUTPUT);
@@ -50,17 +52,25 @@ void Maxon::setMotor(int speed)
     {
         if (speed > 0)
         {
+            enable();
             digitalWrite(p_dir, HIGH);
             analogWrite(p_spd, speed);
+            tar_dir_positive = true;
         }
         else if (speed < 0)
         {
+            enable();
             speed = speed*-1;
             digitalWrite(p_dir, LOW);
             analogWrite(p_spd, speed);
+            tar_dir_positive = false;
         }
         else
-            digitalWrite(p_spd, 0);
+        {
+            disable();
+            analogWrite(p_spd, 0);
+            tar_dir_positive = true;
+        }
     }
 }
 
@@ -140,8 +150,20 @@ void Maxon::setMode(int mode)
 // Output: speed n = f * 20 / z_pol, and turn rpm to radian.s^-s
 float Maxon::getSpeedFeedback(unsigned int sampled_frequency)
 {
+    // Check if a direction switch is made
+    if (sampled_frequency < 101) {
+        real_dir_positive = tar_dir_positive;
+    }
     int z_pol = 8; // number of pole pairs of motor
     float freq_in_Revolution = sampled_frequency * 20 / z_pol;
     float freq_in_Radian = freq_in_Revolution * REV_TO_RADIAN;
+    if (!real_dir_positive) {
+        freq_in_Radian = -1 * freq_in_Radian;
+    }
     return freq_in_Radian;
+}
+
+bool Maxon::getTargetDirection()
+{
+    return tar_dir_positive;
 }

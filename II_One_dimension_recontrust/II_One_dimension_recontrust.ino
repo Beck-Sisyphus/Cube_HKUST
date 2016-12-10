@@ -3,6 +3,8 @@
 #include <Wire.h>
 #include <String.h>
 #include "pinout.h"
+#include "imu.h"
+#include "FilterChLp2.h"
 #include "MPU6050.h"
 #include "helper_3dmath.h"
 #include "maxon.h"
@@ -21,44 +23,30 @@ MPU6050 mpu2(0x69);
 int16_t ax1, ay1, az1, gx1, gy1, gz1;
 int16_t ax2, ay2, az2, gx2, gy2, gz2;
 
-float body_angle, body_angle_dot;
-float body_angle_LPF = 0;
-float wheel_angle_dot;
+float body_angle, body_angle_LPF, body_angle_filtered;
+float body_angle_dot, body_angle_dot_LPF;
+float wheel_angle_dot, wheel_angle_dot_filtered;
 float input_current;
-const float alpha_body_angle = 0.3;
+const float alpha_body_angle = 0.2;
+const float alpha_body_angle_dot = 0.2;
+
+FilterChLp2 body_angle_dot_Filter;
+FilterChLp1_100Hz wheel_angle_dot_Filter;
 
 unsigned volatile int countTimer = 0;
 unsigned volatile int countHz = 0;
-
-ISR(TIMER4_OVF_vect)
-{
-  countHz = countTimer;
-  countTimer = 0;
-  TCNT4 = 0xB1DF;
-}
-
-// Capture the rising edge
-ISR(TIMER4_CAPT_vect)
-{
-  countTimer++;
-}
+int velocity_set_point = 0;
 
 void setup()
 {
-	// Join I2C bus, open up serial to computer
-	Wire.begin();
-	Serial.begin(115200);
-	while (!Serial.available()) ;
+	// Join I2C bus in 100kHz
+	Wire.begin(); // In Beck's Macbook Air, the I2C bus is set to 400kHz
+	Serial.begin(9600);
 
 	// Initialize MPU, attach interrupt to pin 2
 	// Initialize two MPU in the same buss
 	mpu1.initialize();
 	mpu2.initialize();
-
-	// verify connection
-//	Serial.println("Testing device connections...");
-//	Serial.println(mpu1.testConnection() ? "MPU6050 1 connection successful" : "MPU6050 1 connection failed");
-//	Serial.println(mpu2.testConnection() ? "MPU6050 2 connection successful" : "MPU6050 2 connection failed");
 
 	// Calibrate both MPU-6050 in acelX acelY acelZ gyroX gyroY gyroZ
 	setMPUofffset(mpu1, -2761,  -1161, 864, 91,  -2,  -7); //
@@ -67,7 +55,7 @@ void setup()
 	// Initialize the motor, Nidec and Maxon;
 	maxon.begin(P_MAXON_IN1, P_MAXON_IN2, P_MAXON_DIR, P_MAXON_EN, P_MAXON_SPEED, P_MAXON_READY, P_MAXON_FEEDBACK, P_MAXON_STATUS);
 	maxon.setMode(SPEED_MODE_OPEN);
-  maxon.enable();
+    maxon.enable();
 
 	// TODO3: Test the servo
 
@@ -77,103 +65,90 @@ void setup()
 	// Final TODO5: implement the LQR controller, online or offline
 	Cube_Controller_SetUp();
 
-  // MPU initial update
-  mpu1.getMotion6(&ax1, &ay1, &az1, &gx1, &gy1, &gz1);
-  mpu2.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2);
-  
-  // Debugging timer
-  pinMode(P_MAXON_STATUS, OUTPUT);
-  digitalWrite(P_MAXON_STATUS, LOW);
+    // MPU initial update
+    mpu1.getMotion6(&ax1, &ay1, &az1, &gx1, &gy1, &gz1);
+    mpu2.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2);
 
-	// Set up the timer
-//	Timer1.initialize(100000); // set a timer of length 100000 microseconds (or 0.1 sec - or 10Hz => the led will blink 5 times, 5 cycles of on-and-off, per second)
-//	Timer1.attachInterrupt( timerIsr ); // attach the service routine here
-  pinMode(ICP4, INPUT);
-  pinMode(7, OUTPUT);
 
-  // initialize Timer4
-  cli();         // disable global interrupts
-  TCCR1A = 0;    // set entire TCCR1A register to 0
-  TCCR1B = 0;    // set entire TCCR1B register to 0 
-  
-  // count from 45535, for 16-bit counter, 45535 to 65535 get 20000 count
-  // minus 1480 more to compensate the calculation time, 0.74 ms
-  TCNT1 = 0xB7A7;
-  // Set CS10 bit so timer runs at clock speed: 100Hz, 0.01 sec
-  // Prescaling: clk/8, CS11 set to 1
-  TCCR1B |= (1 << CS11);  // Similar: TCCR1B |= _BV(CS11);
+    // Set up the timer as edge detection
+    pinMode(ICP4, INPUT);
 
-  // and input capture interrupt enable
-  TIMSK1 |= (1 << TOIE1); 
-  
-  TCCR4A = 0;    // set entire TCCR1A register to 0
-  TCCR4B = 0;    // set entire TCCR1B register to 0 
-  
-  ICR4H = 0;
-  ICR4L = 0;
+    // disable global interrupts
+    cli();
 
-  // count from 45535, for 16-bit counter, 45535 to 65535 get 20000 count
-  TCNT4 = 0xB1DF;
-  
-  // Set CS10 bit so timer runs at clock speed: 100Hz, 0.01 sec
-  // Prescaling: clk/8, CS11 set to 1
-  TCCR4B |= (1 << CS41);  // Similar: TCCR1B |= _BV(CS11);
-//  TCCR4B |= (1 << CS42);  // Similar: TCCR1B |= _BV(CS11);
-  
-  // ICES1 Input Capture Edge Select flag, 1 for rising, 0 for falling
-  TCCR4B |= (1 << ICES4);
-  
-  // and input capture interrupt enable
-  TIMSK4 |= (1 << ICIE4); 
-  // enable Timer overflow interrupt:
-  TIMSK4 |= (1 << TOIE4); 
-  
-  // enable global interrupts:
-  sei();
-  delay(1000);
+    enableTimer1Interrupt();
+    enableTimer4EdgeDetection();
+
+    // enable global interrupts:
+    sei();
+    delay(500);
+    pinMode(LED_BUILTIN, OUTPUT);
 }
-
+unsigned long timeIntoI2C;
+unsigned long timeOutI2C;
 void loop()
 {
-  mpu1.getMotion6(&ax1, &ay1, &az1, &gx1, &gy1, &gz1);
-  mpu2.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2);
-
-	#if DEBUG
-		Serial.print(body_angle, 6);
-		Serial.print(",");
-		Serial.print(body_angle_dot, 6);
-		Serial.print(", ");
-		Serial.print(wheel_angle_dot, 6);
-    Serial.print(", ");
-    Serial.print(input_current, 6);
-		Serial.println("\r\n");
-	#endif
+//    timeIntoI2C = micros();
+//    Serial.println(timeIntoI2C - timeOutI2C);
+    mpu1.getMotion6(&ax1, &ay1, &az1, &gx1, &gy1, &gz1);
+    mpu2.getMotion6(&ax2, &ay2, &az2, &gx2, &gy2, &gz2);
+//    timeOutI2C = micros();
+//    Serial.println(timeOutI2C - timeIntoI2C);
+//    Serial.print(body_angle_dot * 100);
+//    Serial.print( " " );
+    //Serial.print(input_current);
+    //Serial.print( " " );
+    Serial.println(wheel_angle_dot_filtered);
+//    Serial.println(velocity_set_point);
 }
+
 
 ISR(TIMER1_OVF_vect)
 {
-  digitalWrite(7, HIGH);
-  
-  // Get the calculated angle and angle dot dot
-//  body_angle = tilt_estimation(&ax1, &ax2, &ay1, &ay2, &body_angle);
-  body_angle = tilt_estimation(ax1, ax2, ay1, ay2);
+    // Clear the interrupt flag
+    TCNT1 = 0xB1DF;
 
-  body_angle_LPF = (1 - alpha_body_angle) * body_angle_LPF + alpha_body_angle * body_angle;
-   
-  // TODO: Add a Jacobian for frame transformation
-  // For right now assume mpu2 give a simular reading for angular velocity
-  body_angle_dot = (float)(gx2 * gyroToRadian) / 100000;
+    // digitalWrite(7, HIGH);
 
-  wheel_angle_dot = maxon.getSpeedFeedback(countHz * 100);
+    // Get the calculated angle and angle dot dot
+    //  body_angle = tilt_estimation(&ax1, &ax2, &ay1, &ay2, &body_angle);
+    body_angle = tilt_estimation(ax1, ax2, ay1, ay2, body_angle);
 
-  input_current = Cube_LQR_Controller(body_angle,body_angle_dot,wheel_angle_dot);
-  Serial.println(input_current);
+    body_angle_LPF = (1 - alpha_body_angle) * body_angle_LPF + alpha_body_angle * body_angle;
 
-  // Set the maxon current every 20ms
-  maxon.setMotor((int)input_current/10);
-  // maxon.setMotor(20);
+    // For right now assume mpu2 give a simular reading for angular velocity
+    // TODO: filter out gyroscope raw data
+    
+    body_angle_dot = ((float) gz2 * gyroToRadian) / 100000.0;
 
-  TCNT1 = 0xB7A7;
+    body_angle_dot_LPF = body_angle_dot_Filter.step(body_angle_dot) - gyro_offset;
 
-  digitalWrite(7, LOW);
+    body_angle_filtered = complementaryFilteredAngle( body_angle_LPF, body_angle_dot_LPF);
+
+    wheel_angle_dot = maxon.getSpeedFeedback(countHz * 100);
+
+    wheel_angle_dot_filtered = wheel_angle_dot_Filter.step(wheel_angle_dot);
+
+    input_current = Cube_LQR_Controller(body_angle_filtered, body_angle_dot_LPF, wheel_angle_dot_filtered);
+
+    velocity_set_point = (int)input_current;
+
+    // Set the maxon current every 20ms
+//    maxon.setMotor(velocity_set_point);
+    maxon.setMotor(-40);
+
+    // digitalWrite(7, LOW);
+}
+
+ISR(TIMER4_OVF_vect)
+{
+    TCNT4 = 0xB1DF;
+    countHz = countTimer;
+    countTimer = 0;
+}
+
+// Capture the rising edge
+ISR(TIMER4_CAPT_vect)
+{
+    countTimer++;
 }

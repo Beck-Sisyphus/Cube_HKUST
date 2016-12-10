@@ -27,19 +27,10 @@
 //#define I2C_SCL A5
 #define I2C_SDA 20
 #define I2C_SCL 21
-// const int16_t GYRO_SENSITIVITY = 131; // LSB / degree/s
-// const float degreeToRadian = 0.017453; // radian / degree
-const int16_t gyroToRadian = 133; // E-6radian/s / LSB
-const float REV_TO_RADIAN = 6.283185;
-const float RADIAN_TO_REV = 0.159155;
 
 // Encoder SoftwareSerial
 #define SOFT_RX A2
 #define SOFT_TX A3
-
-const int16_t imu_1_radius = 150; // millimeter
-const int16_t imu_2_radius =  34; // millimeter
-const int16_t IMU_SENSITIVITY = 8192;    // IMU scale for 1g
 
 // Timer
 // From the schematics, the pin 9 on Mega is corresponding PE7, which is ICP3

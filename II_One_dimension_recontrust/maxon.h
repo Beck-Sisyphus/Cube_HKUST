@@ -48,6 +48,10 @@ private:
     bool started;
     // Store the mode
     int p_mode;
+    // Store the target direction, in 1 (true) or -1 (false)
+    bool tar_dir_positive;
+    // Store the real direction, in 1 (true) or -1 (false)
+    bool real_dir_positive;
 
 public:
     Maxon();
@@ -60,7 +64,7 @@ public:
 
     //Drives the motor at the given speed
     void setMotor(int speed);
-    void setMotorCurrent(float current);
+    void setMotorCurrent(float current); // TODO: Check to delete it
 
     //Enable or disable motor drive output
     void enable();
@@ -74,6 +78,9 @@ public:
 
     // Get the calculated motor speed in radian.s^-1
     float getSpeedFeedback(unsigned int sampled_frequency);
+
+    // Get if the target direction is positive
+    bool getTargetDirection();
 
     const int MAX_RPM_SLOW = 625;
     const int MAX_RPM_MID  = 2500;

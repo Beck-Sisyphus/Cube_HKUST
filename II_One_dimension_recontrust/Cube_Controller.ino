@@ -2,7 +2,6 @@
 #define LQR_Type
 // #define PID_Type
 
-#define Angle_offset -0.12
 
 float State_now[3];              // State used in Controller
 float State_bar[3];              // State measured from IMU and Ecoder;
@@ -35,39 +34,6 @@ void Cube_Controller_SetUp ( void )
     #endif
 }
 
-int Cube_Controller( float body_angle, float body_angle_dot, float wheel_angle_dot )
-{
-    State_bar[0] = body_angle;
-    State_bar[1] = body_angle_dot;
-    State_bar[2] = wheel_angle_dot;
-    #ifdef  LQR_Type
-        //Low Pass Filter Get Value
-        State_LPF = State_LPF_Next;
-        //Set State_now
-        State_now[0] = State_bar[0] - State_LPF - Angle_offset;//Low Pass Filter
-        State_now[1] = State_bar[1];
-        State_now[2] = State_bar[2];
-        //Implement of LQR
-        u_now = Kd[0]*State_now[0] + Kd[1]*State_now[1] + Kd[2]*State_now[2];
-        /*if (u_now >= 0)
-        {
-        Voltage_now = (u_now*1.419 +4)*(u_now*1.419 +4);
-        }
-        else
-        {
-        Voltage_now = -(u_now*1.419 -4)*(u_now*1.419 -4);
-        }*/
-        //Low Pass Filter Updata
-        State_LPF_Next = (1- Alpha_LPF)*State_LPF + Alpha_LPF*State_bar[0];
-    #endif
-    #ifdef  PID_Type
-        Voltage_now = Kp * (-State_bar[0] + Angle_offset) + Kd * (State_bar[0]);
-    #endif
-    if (Voltage_now >= 255) { Voltage_now = 255; }
-    if (Voltage_now <= -255) { Voltage_now = -255; }
-    return (int)Voltage_now;
-}
-
 float Cube_LQR_Controller( float body_angle, float body_angle_dot, float wheel_angle_dot )
 {
     State_bar[0] = body_angle;
@@ -77,7 +43,7 @@ float Cube_LQR_Controller( float body_angle, float body_angle_dot, float wheel_a
     //Low Pass Filter Get Value
     State_LPF = State_LPF_Next;
     //Set State_now
-    State_now[0] = State_bar[0] - State_LPF - Angle_offset;//Low Pass Filter
+    State_now[0] = State_bar[0] - State_LPF;//Low Pass Filter
     State_now[1] = State_bar[1];
     State_now[2] = State_bar[2];
     //Implement of LQR
@@ -85,3 +51,63 @@ float Cube_LQR_Controller( float body_angle, float body_angle_dot, float wheel_a
     State_LPF_Next = (1- Alpha_LPF)*State_LPF + Alpha_LPF*State_bar[0];
     return u_now;
 }
+
+// int Cube_Controller( float body_angle, float body_angle_dot, float wheel_angle_dot )
+// {
+//     float Angle_gyro=0;
+//     State_bar[0] = body_angle - Angle_offset;
+//     State_bar[1] = body_angle_dot - Angle_dot_offset;
+//     State_bar[2] = wheel_angle_dot;
+//     //Filter
+//     if (First_Flag ==0 )
+//     {
+//         Angle_final = State_bar[0];
+//         First_Flag = 1;
+//     }
+//     Angle_gyro = Angle_final - State_bar[1]*0.001;
+//     Angle_final = State_bar[0] * Trust_Value + Angle_gyro * (1 - Trust_Value);
+//
+//     #ifdef  LQR_Type
+//         //Low Pass Filter Get Value
+//         State_LPF = State_LPF_Next;
+//         //Set State_now
+//         State_now[0] = State_bar[0] - State_LPF - Angle_offset;//Low Pass Filter
+//         State_now[1] = State_bar[1];
+//         State_now[2] = State_bar[2];
+//         //Implement of LQR
+//         u_now = Kd[0]*State_now[0] + Kd[1]*State_now[1] + Kd[2]*State_now[2];
+//         /*if (u_now >= 0)
+//         {
+//         Voltage_now = (u_now*1.419 +4)*(u_now*1.419 +4);
+//         }
+//         else
+//         {
+//         Voltage_now = -(u_now*1.419 -4)*(u_now*1.419 -4);
+//         }*/
+//         //Low Pass Filter Updata
+//         State_LPF_Next = (1- Alpha_LPF)*State_LPF + Alpha_LPF*State_bar[0];
+//     #endif
+//     #ifdef  PID_Type
+//        if (Kd_Counter<=4)
+//        {
+//             Angle_dot_Kd = (Angle_dot_Kd  -Angle_final +Angle_final_prev)/2;
+//        }
+//        if (Kd_Counter == 4)
+//        {
+//             Angle_dot_Kd_now = Angle_dot_Kd;
+//        }
+//        // Voltage_now = Kp * (-State_bar[0] + Angle_offset) + Kd * (State_bar[1]- Angle_dot_offset);
+//        Voltage_now = Kp * (-Angle_final) + Kd * Angle_dot_Kd_now;
+//     #endif
+//   Serial.print(Kp * (-Angle_final));
+//   Serial.print(",");
+//   Serial.print(Kd * (-Angle_final +Angle_final_prev));
+//   Serial.print("\r\n");
+//     State_prev[0] = State_bar[0];
+//     State_prev[1] = State_bar[1];
+//     State_prev[2] = State_bar[2];
+//     Angle_final_prev = Angle_final;
+//     if (Voltage_now >= 255) { Voltage_now = 255; }
+//     if (Voltage_now <= -255) { Voltage_now = -255; }
+//     return (int)Voltage_now;
+// }
